@@ -1,0 +1,40 @@
+xcode-select --install
+# ^ sometimes not work due to internet issues
+#go here https://developer.apple.com/download/all/?q=command
+#check your xcode version from xcode start page under welcome to xcode
+#mine is 13.4
+#download the image for your version (mine 13.4)
+#install it
+brew install gcc 
+brew install automake autoconf libtool
+brew install hunspell
+brew install Tesseract
+brew install tesseract-lang
+conda create -n tesseract python=3.7
+conda activate tesseract
+conda install -c conda-forge pytesseract
+conda install -c conda-forge pdf2image
+#if you didn't install apple command line tools before :
+#try again the next command
+brew install xpdf
+conda install -c conda-forge poppler
+
+cp /opt/homebrew/bin/pdf* <user_home>/opt/anaconda3/envs/tesseract/bin/
+#in home opt (<user_home>/opt/)
+sudo chown -R <user_name> .
+chmod -R 777 .
+#to test
+#pdftoppm ./utobia_full_page.pdf ./utobia_full_page.pdf_ext/
+
+#for spell checking
+brew install hunspell
+cp ./hunspell-ar_3.1/ar.* /Users/<user_home>/Library/Spelling/
+pip install cyhunspell
+#if the previous didn't work
+#git clone https://github.com/MSeal/cython_hunspell.git
+#cd cython_hunspell
+#python setup.py install
+
+pip install pdf2image
+pip install pytesseract
+pip install cacheman
