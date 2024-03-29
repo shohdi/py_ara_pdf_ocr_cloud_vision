@@ -21,6 +21,7 @@ import time
 
 import tkinter as tk
 from tkinter import filedialog
+import json
 
 
 class StoppableThread(threading.Thread):
@@ -37,6 +38,17 @@ class StoppableThread(threading.Thread):
 
     def stopped(self):
         return self._stop_event.is_set()
+
+
+def getPdfJsonFiles(pdf_file):
+    ret = []
+    with open('sample.json', 'r',encoding='utf-8') as f:
+        data = json.load(f)
+    
+    ret.append(data)
+
+    return ret
+    
 
 
 spellChecker = None
@@ -74,114 +86,58 @@ def pdf_to_txt(pdf_file,allowSpell,rootWindow):
     lblStatus.config(text='getting pdf info ')
     
     print('getting pdf info ')
-    infoFile = pdf2image.pdfinfo_from_path(pdf_file)
-    lblStatus.config(text=str(infoFile))
+    #infoFile = pdf2image.pdfinfo_from_path(pdf_file)
+    #lblStatus.config(text=str(infoFile))
     
-    print(infoFile)
+    #print(infoFile)
     #lastPage = (3 if int(infoFile["Pages"]) > 3 else infoFile["Pages"] )
     #images = pdf2image.convert_from_path(pdf_file,last_page=lastPage)#,output_folder=extFullPath)
     lblStatus.config(text='start converting pdf to images in '+ extFullPath + os.path.sep)
     
     
-    print('start converting pdf to images in ',extFullPath + os.path.sep)
-    cmdLine = 'pdftoppm '
+    #print('start converting pdf to images in ',extFullPath + os.path.sep)
+    #cmdLine = 'pdftoppm '
     #cmdLine = cmdLine + '-l ' + str(lastPage) + ' '
-    cmdLine = cmdLine  +'"' +pdf_file+'"' + ' '
-    cmdLine = cmdLine  + '"' + extFullPath + os.path.sep + '"'
+    #cmdLine = cmdLine  +'"' +pdf_file+'"' + ' '
+    #cmdLine = cmdLine  + '"' + extFullPath + os.path.sep + '"'
 
 
-    stream = os.popen(cmdLine)
-    output = stream.read()
-    if "error" in output.lower():
-        raise Exception(output)
+    #stream = os.popen(cmdLine)
+    #output = stream.read()
+    #if "error" in output.lower():
+    #    raise Exception(output)
     
-    imageNames =  os.listdir(extFullPath)
-    imageNames.sort()
+    #imageNames =  os.listdir(extFullPath)
+    #imageNames.sort()
     
     indx = 1
-
+    files = getPdfJsonFiles(pdf_file)
     out_str = '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8" /></head><body>'
 
-    for strImage in imageNames:
+    for jsonPage in files:
         if myThread.stopped():
             return
-        if(".ppm" in strImage.lower()):
-            #start extract ocr
-            
-            
-            lblPageNo.config(text='extracting page no ' + str(indx) +' from ' + str(infoFile["Pages"]))
-            
-            print('extracting page no ',str(indx),' from ',str(infoFile["Pages"]))
-            fName = extFullPath + os.path.sep + strImage
-            
-            img = Image.open(fName,'r')
-            extracted = ocr_core(img)
-            if allowSpell:
-                if spellChecker is None :
-                    spellChecker = Hunspell('ar', hunspell_data_dir='.' + os.path.sep+ 'hunspell-ar_3.1' + os.path.sep)
-                lblStatus.config(text='start spell check : ')
-                print ('start spell check : ')
-                words = re.split('[ \n\r\t]+',extracted)
-                words = [re.sub('[^\\u0600-\\u06FF]+','',b) for b in words ]
-                words = [re.sub('[\\u0660-\\u0669]+','',b) for b in words ]
-                words = [b for b in words if re.sub('[ \n\r\t]+','',b) != '']
-                for i,word in enumerate(words):
+    
+        lblPageNo.config(text='extracting page no ' + str(indx) +' from ' + str(len(files)))
+
+        if jsonPage["textAnnotations"] is not None:
+            if len(jsonPage["textAnnotations"]) > 0:
+                if jsonPage["textAnnotations"][0]["description"] is not None:
+                    myExtractedText = jsonPage["textAnnotations"][0]["description"]
+                    myExtractedText = re.sub('[\s]','&nbsp;',myExtractedText)
+                    myExtractedText = re.sub('[\t]','&nbsp;&nbsp;&nbsp;',myExtractedText)
+                    myExtractedText = re.sub('[\n]+','<br />',myExtractedText)
                     
-                    #found word
-                    tes = spellChecker.spell(word)
-                    if not tes:
-                        suggessions = spellChecker.suggest(word)
-                        strWrongWord = 'found wrong spelling : ' + str(word)
-                        lblStatus.config(text=strWrongWord)
-                        print ('found wrong spelling : ' , word , suggessions)
-                        strWrongWord = strWrongWord + '\n' + 'من فضلك صحح الكلمة :'
-                        num = i - 4
-                        if(num < 0):
-                            num = 0
-                        
-                        strBefore = ''
-                        while num < i :
-                            strBefore = strBefore  + ' ' + words[num]
-                            num +=1
-                        lblSuggest.config(text='الاحتمالات : ' + str(suggessions))
-                        lblBefore.config(text=strBefore)
-                        lblWord.config(text=word)
-                        num = i + 4
-                        if num > len(words)-1:
-                            num = len(words)-1
-                        strAfter = ''
-                        while num > i :
-                            strAfter = words[num] + ' ' +  strAfter
-                            num -= 1
-                        lblAfter.config(text=strAfter)
-                        currentWord = word
-                        currentExtracted = extracted
-                        wordReplaced = False
-                        while not wordReplaced and not myThread.stopped():
-                            time.sleep(0.1)
-                        
-                        
-                        
-                        extracted = currentExtracted
-                        words[i] = currentWord
-                        
+                    
+                    out_str = out_str + "<p>" +   myExtractedText + "</p>"
+        
 
-                        
-
-            
-                
-            if(re.sub('[ \n\r\t]+','',extracted) != ''):
-                extracted = re.sub('[ \t]+',' ',extracted)
-                extracted = re.sub('[\r]+','',extracted)
-                extracted = re.sub('[\n]+','\n',extracted)
-                out_str = out_str + extracted + '\n'
-
-            indx+=1
+        indx+=1
 
 
-    out_str = re.sub('[\n]+','<br />',out_str)        
+    #out_str = re.sub('[\n]+','<br />',out_str)        
     out_str = out_str + '</body></html>'
-    with io.open(pdf_file + '.html','w') as outFile :
+    with io.open(pdf_file + '.html','w',encoding='utf-8') as outFile :
         outFile.write(out_str)
     if(os.path.exists(extFullPath)):
         shutil.rmtree(extFullPath)
@@ -193,7 +149,8 @@ def pdf_to_txt(pdf_file,allowSpell,rootWindow):
 
 
 def ocr_core(file):
-    text = pytesseract.image_to_string(file,lang="ara")#,config="--oem 1")
+    #text = pytesseract.image_to_string(file,lang="ara")#,config="--oem 1")
+    text = ''
     return text
 
 
