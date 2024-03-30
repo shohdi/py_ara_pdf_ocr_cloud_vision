@@ -191,8 +191,8 @@ def async_detect_document(gcs_source_uri, gcs_destination_uri):
 
 
 def getJsonHtmlFromStr(jsonStr):
-    myExtractedText = re.sub('[\s]','&nbsp;',jsonStr)
-    myExtractedText = re.sub('[\t]','&nbsp;&nbsp;&nbsp;',myExtractedText)
+    myExtractedText = re.sub('[\s]',' ',jsonStr)
+    myExtractedText = re.sub('[\t]',' &nbsp;&nbsp;&nbsp; ',myExtractedText)
     myExtractedText = re.sub('[\n]+','<br />',myExtractedText)
     
     
@@ -282,8 +282,8 @@ def pdf_to_txt(pdf_file,allowSpell,rootWindow):
             if len(jsonPage["textAnnotations"]) > 0:
                 if jsonPage["textAnnotations"][0]["description"] is not None:
                     myExtractedText = jsonPage["textAnnotations"][0]["description"]
-                    myExtractedText = re.sub('[\s]','&nbsp;',myExtractedText)
-                    myExtractedText = re.sub('[\t]','&nbsp;&nbsp;&nbsp;',myExtractedText)
+                    myExtractedText = re.sub('[\s]',' ',myExtractedText)
+                    myExtractedText = re.sub('[\t]',' &nbsp;&nbsp;&nbsp; ',myExtractedText)
                     myExtractedText = re.sub('[\n]+','<br />',myExtractedText)
                     
                     
