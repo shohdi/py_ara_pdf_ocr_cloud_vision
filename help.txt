@@ -1,0 +1,5 @@
+#this code using google cloud vision ai to scan pdf text and output html file
+#this cloud service is free until 1000 pages
+pip install google-cloud-storage
+pip install google-cloud-vision
+
