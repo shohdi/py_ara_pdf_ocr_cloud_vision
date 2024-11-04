@@ -24,6 +24,7 @@ from tkinter import filedialog
 import json
 from google.cloud import storage
 from google.cloud import vision
+from google.cloud.vision_v1 import types
 
 
 class StoppableThread(threading.Thread):
@@ -119,19 +120,22 @@ def async_detect_document(gcs_source_uri, gcs_destination_uri):
         batch_size = 1
 
         client = vision.ImageAnnotatorClient()
-        
-        feature = vision.Feature(type_=vision.Feature.Type.DOCUMENT_TEXT_DETECTION)
+        feature = types.Feature(
+            type=vision.enums.Feature.Type.DOCUMENT_TEXT_DETECTION
+        )
+        #feature = vision.enums.Feature.Type.DOCUMENT_TEXT_DETECTION
         sourcePath  = "gs://" + bucket_name + "/" + gcs_source_uri
         destPath  = "gs://" + bucket_name + "/" + gcs_destination_uri
-        gcs_source = vision.GcsSource(uri=sourcePath)
-        input_config = vision.InputConfig(gcs_source=gcs_source, mime_type=mime_type)
-
-        gcs_destination = vision.GcsDestination(uri=destPath)
-        output_config = vision.OutputConfig(
+        gcs_source = types.GcsSource(uri=sourcePath)
+        #gcs_source = vision.GcsSource(uri=sourcePath)
+        input_config = types.InputConfig(gcs_source=gcs_source, mime_type=mime_type)
+        gcs_destination = types.GcsDestination(uri=destPath)
+        #gcs_destination = vision.GcsDestination(uri=destPath)
+        output_config = types.OutputConfig(
             gcs_destination=gcs_destination, batch_size=batch_size
         )
 
-        async_request = vision.AsyncAnnotateFileRequest(
+        async_request = types.AsyncAnnotateFileRequest(
             features=[feature], input_config=input_config, output_config=output_config
         )
 
